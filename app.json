@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "agent-monitor-dashboard",
+    "name": "Agent Monitor",
     "slug": "agent-monitor-dashboard",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.portfolio.agentmonitor"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,10 +17,15 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.portfolio.agentmonitor"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "agentmonitor"
   }
 }
