@@ -18,7 +18,8 @@ import {
   formatRelative,
 } from '../../src/components/ui';
 import { useFleetStore } from '../../src/store/useFleetStore';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { type Colors, radius, spacing, typography } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Run, RunStatus } from '../../src/types';
 
 const STATUS_FILTERS: Array<'all' | RunStatus> = [
@@ -28,17 +29,21 @@ const STATUS_FILTERS: Array<'all' | RunStatus> = [
   'succeeded',
 ];
 
-const STATUS_META: Record<
-  RunStatus,
-  { color: string; icon: keyof typeof Ionicons.glyphMap }
-> = {
-  succeeded: { color: colors.healthy, icon: 'checkmark-circle' },
-  failed: { color: colors.failing, icon: 'close-circle' },
-  running: { color: colors.accent, icon: 'ellipsis-horizontal-circle' },
-  cancelled: { color: colors.idle, icon: 'remove-circle' },
-};
+/** Built per palette rather than frozen at module scope, so it re-tints. */
+const statusMeta = (
+  c: Colors,
+): Record<RunStatus, { color: string; icon: keyof typeof Ionicons.glyphMap }> => ({
+  succeeded: { color: c.healthy, icon: 'checkmark-circle' },
+  failed: { color: c.failing, icon: 'close-circle' },
+  running: { color: c.accent, icon: 'ellipsis-horizontal-circle' },
+  cancelled: { color: c.idle, icon: 'remove-circle' },
+});
 
 export default function RunsScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const STATUS_META = statusMeta(colors);
+
   const loading = useFleetStore((s) => s.loading);
   const runs = useFleetStore((s) => s.runs);
   const agents = useFleetStore((s) => s.agents);
@@ -80,7 +85,10 @@ export default function RunsScreen() {
               style={[
                 styles.filterChip,
                 active
-                  ? { backgroundColor: `${tint}26`, borderColor: tint }
+                  ? {
+                      backgroundColor: `${tint}${colors.tintAlpha}`,
+                      borderColor: tint,
+                    }
                   : null,
               ]}
             >
@@ -118,7 +126,9 @@ export default function RunsScreen() {
 
 function RunRow({ run, agentName }: { run: Run; agentName: string }) {
   const router = useRouter();
-  const meta = STATUS_META[run.status];
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const meta = statusMeta(colors)[run.status];
 
   return (
     <Card style={styles.runCard} onPress={() => router.push(`/run/${run.id}`)}>
@@ -159,14 +169,24 @@ function RunRow({ run, agentName }: { run: Run; agentName: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
 
-  filterScroll: { flexGrow: 0, marginBottom: spacing.md },
-  filterRow: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  // Fixed chip height + centred row; padding alone let the ScrollView collapse
+  // and clip the chip borders and letter descenders.
+  filterScroll: { flexGrow: 0, flexShrink: 0, marginBottom: spacing.md },
+  filterRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    minHeight: 44,
+  },
   filterChip: {
+    height: 34,
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: 7,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
@@ -176,6 +196,8 @@ const styles = StyleSheet.create({
     ...typography.small,
     color: colors.textDim,
     textTransform: 'capitalize',
+    lineHeight: 16,
+    includeFontPadding: false,
   },
 
   list: {
@@ -200,4 +222,4 @@ const styles = StyleSheet.create({
   runMeta: { ...typography.tiny, color: colors.textDim },
   runDivider: { ...typography.tiny, color: colors.textMuted },
   runTime: { ...typography.tiny, color: colors.textMuted },
-});
+  });

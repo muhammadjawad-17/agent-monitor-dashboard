@@ -4,23 +4,31 @@ import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Card, LoadingState, Pill, formatRelative } from '../../src/components/ui';
 import { useFleetStore } from '../../src/store/useFleetStore';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { type Colors, radius, spacing, typography } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { AlertRule } from '../../src/types';
 
-const CHANNEL_META: Record<
+/** Built per palette rather than frozen at module scope, so it re-tints. */
+const channelMeta = (
+  c: Colors,
+): Record<
   AlertRule['channel'],
   { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }
-> = {
-  slack: { icon: 'chatbubbles-outline', label: 'Slack', color: colors.accent },
-  email: { icon: 'mail-outline', label: 'Email', color: colors.textDim },
+> => ({
+  slack: { icon: 'chatbubbles-outline', label: 'Slack', color: c.accent },
+  email: { icon: 'mail-outline', label: 'Email', color: c.textDim },
   pagerduty: {
     icon: 'alert-circle-outline',
     label: 'PagerDuty',
-    color: colors.failing,
+    color: c.failing,
   },
-};
+});
 
 export default function AlertsScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const CHANNEL_META = channelMeta(colors);
+
   const loading = useFleetStore((s) => s.loading);
   const rules = useFleetStore((s) => s.alertRules);
   const toggleRule = useFleetStore((s) => s.toggleAlertRule);
@@ -124,7 +132,8 @@ export default function AlertsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: {
     padding: spacing.lg,
@@ -180,4 +189,4 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 18,
   },
-});
+  });

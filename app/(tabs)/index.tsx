@@ -27,11 +27,20 @@ import {
   selectRecentFailures,
   useFleetStore,
 } from '../../src/store/useFleetStore';
-import { colors, healthColor, radius, spacing, typography } from '../../src/theme';
+import {
+  type Colors,
+  healthColor,
+  radius,
+  spacing,
+  typography,
+} from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 
 export default function OverviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, scheme, toggle } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const load = useFleetStore((s) => s.load);
   const refresh = useFleetStore((s) => s.refresh);
@@ -87,16 +96,32 @@ export default function OverviewScreen() {
       <Card style={styles.liveRow}>
         <View style={styles.liveLabel}>
           <StatusDot color={liveMode ? colors.healthy : colors.idle} />
-          <Text style={styles.liveText}>
+          <Text style={styles.liveText} numberOfLines={1}>
             {liveMode ? 'Live telemetry streaming' : 'Live feed paused'}
           </Text>
         </View>
-        <Switch
-          value={liveMode}
-          onValueChange={toggleLiveMode}
-          trackColor={{ true: colors.accentDim, false: colors.border }}
-          thumbColor={liveMode ? colors.accent : colors.textMuted}
-        />
+
+        <View style={styles.liveActions}>
+          <Pressable
+            onPress={toggle}
+            style={styles.themeButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${scheme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            <Ionicons
+              name={scheme === 'dark' ? 'sunny' : 'moon'}
+              size={16}
+              color={colors.textDim}
+            />
+          </Pressable>
+          <Switch
+            value={liveMode}
+            onValueChange={toggleLiveMode}
+            trackColor={{ true: colors.accentDim, false: colors.border }}
+            thumbColor={liveMode ? colors.accent : colors.textMuted}
+          />
+        </View>
       </Card>
 
       <View style={styles.metricGrid}>
@@ -144,17 +169,17 @@ export default function OverviewScreen() {
           {unhealthy.map((agent) => (
             <Card
               key={agent.id}
-              accent={`${healthColor(agent.status)}66`}
+              accent={`${healthColor(agent.status, colors)}66`}
               style={styles.attentionCard}
               onPress={() => router.push(`/agent/${agent.id}`)}
             >
               <View style={styles.attentionHeader}>
-                <StatusDot color={healthColor(agent.status)} />
+                <StatusDot color={healthColor(agent.status, colors)} />
                 <Text style={styles.attentionName}>{agent.name}</Text>
                 <Text
                   style={[
                     styles.attentionStatus,
-                    { color: healthColor(agent.status) },
+                    { color: healthColor(agent.status, colors) },
                   ]}
                 >
                   {agent.status}
@@ -169,7 +194,7 @@ export default function OverviewScreen() {
                 data={agent.throughput}
                 width={280}
                 height={36}
-                color={healthColor(agent.status)}
+                color={healthColor(agent.status, colors)}
               />
             </Card>
           ))}
@@ -189,7 +214,7 @@ export default function OverviewScreen() {
               ]}
             >
               <View style={styles.throughputLabel}>
-                <StatusDot color={healthColor(agent.status)} size={6} />
+                <StatusDot color={healthColor(agent.status, colors)} size={6} />
                 <Text style={styles.throughputName} numberOfLines={1}>
                   {agent.name}
                 </Text>
@@ -198,7 +223,7 @@ export default function OverviewScreen() {
                 data={agent.throughput}
                 width={110}
                 height={26}
-                color={healthColor(agent.status)}
+                color={healthColor(agent.status, colors)}
                 filled={false}
               />
               <Text style={styles.throughputValue}>
@@ -268,6 +293,7 @@ function MetricTile({
   icon: keyof typeof Ionicons.glyphMap;
   tint: string;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.metricTile}>
       <View style={styles.metricTop}>
@@ -283,7 +309,8 @@ function MetricTile({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.lg, gap: spacing.md },
 
@@ -293,8 +320,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
   },
-  liveLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  liveText: { ...typography.body, color: colors.text, fontWeight: '500' },
+  liveLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  liveText: { ...typography.body, color: colors.text, fontWeight: '500', flexShrink: 1 },
+
+  liveActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  themeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
+  },
 
   metricGrid: {
     flexDirection: 'row',
@@ -401,4 +445,4 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     textAlign: 'center',
   },
-});
+  });

@@ -10,18 +10,23 @@ import {
   formatDuration,
 } from '../../src/components/ui';
 import { logsForRun, useFleetStore } from '../../src/store/useFleetStore';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { type Colors, radius, spacing, typography } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { LogLevel } from '../../src/types';
 
-const LEVEL_COLOR: Record<LogLevel, string> = {
-  debug: colors.textMuted,
-  info: colors.accent,
-  warn: colors.degraded,
-  error: colors.failing,
-};
+/** Built per palette rather than frozen at module scope, so it re-tints. */
+const levelColor = (c: Colors): Record<LogLevel, string> => ({
+  debug: c.textMuted,
+  info: c.accent,
+  warn: c.degraded,
+  error: c.failing,
+});
 
 export default function RunTraceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const LEVEL_COLOR = levelColor(colors);
 
   const run = useFleetStore((s) => s.runs.find((r) => r.id === id));
   const agent = useFleetStore((s) =>
@@ -162,6 +167,7 @@ export default function RunTraceScreen() {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.statTile}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -170,7 +176,8 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: {
     padding: spacing.lg,
@@ -249,4 +256,4 @@ const styles = StyleSheet.create({
   toolName: { ...typography.tiny, color: colors.accent, fontWeight: '600' },
   logDuration: { ...typography.tiny, color: colors.textMuted },
   logMessage: { ...typography.small, color: colors.textDim, lineHeight: 18 },
-});
+  });

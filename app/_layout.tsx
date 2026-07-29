@@ -2,12 +2,23 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { colors } from '../src/theme';
+import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 
 export default function RootLayout() {
   return (
+    <ThemeProvider>
+      <RootStack />
+    </ThemeProvider>
+  );
+}
+
+/** Split out so it sits inside the provider and can read the active palette. */
+function RootStack() {
+  const { colors, scheme } = useTheme();
+
+  return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <StatusBar style="light" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },

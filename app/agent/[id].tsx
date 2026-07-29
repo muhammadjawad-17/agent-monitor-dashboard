@@ -17,11 +17,20 @@ import {
   selectRunsForAgent,
   useFleetStore,
 } from '../../src/store/useFleetStore';
-import { colors, healthColor, radius, spacing, typography } from '../../src/theme';
+import {
+  type Colors,
+  healthColor,
+  radius,
+  spacing,
+  typography,
+} from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 
 export default function AgentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const agent = useFleetStore((s) => s.agents.find((a) => a.id === id));
   const allRuns = useFleetStore((s) => s.runs);
@@ -42,7 +51,7 @@ export default function AgentDetailScreen() {
     );
   }
 
-  const tint = healthColor(agent.status);
+  const tint = healthColor(agent.status, colors);
   const failed = runs.filter((r) => r.status === 'failed').length;
 
   return (
@@ -179,6 +188,7 @@ function Stat({
   value: string;
   tint?: string;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.statTile}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -189,7 +199,8 @@ function Stat({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl * 2, gap: spacing.md },
 
@@ -257,4 +268,4 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     textAlign: 'center',
   },
-});
+  });

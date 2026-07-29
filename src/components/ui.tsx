@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
-import { colors, radius, spacing, typography } from '../theme';
+import { type Colors, radius, spacing, typography } from '../theme';
+import { useTheme, useThemedStyles } from '../theme/ThemeContext';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -48,6 +49,7 @@ interface CardProps {
 }
 
 export function Card({ children, onPress, style, accent }: CardProps) {
+  const styles = useThemedStyles(makeStyles);
   const content = (
     <View
       style={[
@@ -91,24 +93,28 @@ export function StatusDot({ color, size = 8 }: { color: string; size?: number })
 
 export function Pill({
   label,
-  color = colors.textDim,
+  color,
   filled = false,
 }: {
   label: string;
   color?: string;
   filled?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const tint = color ?? colors.textDim;
+
   return (
     <View
       style={[
         styles.pill,
         {
-          borderColor: filled ? 'transparent' : `${color}66`,
-          backgroundColor: filled ? `${color}26` : 'transparent',
+          borderColor: filled ? 'transparent' : `${tint}66`,
+          backgroundColor: filled ? `${tint}${colors.tintAlpha}` : 'transparent',
         },
       ]}
     >
-      <Text style={[styles.pillText, { color }]}>{label}</Text>
+      <Text style={[styles.pillText, { color: tint }]}>{label}</Text>
     </View>
   );
 }
@@ -129,9 +135,13 @@ export function Sparkline({
   data,
   width = 100,
   height = 32,
-  color = colors.accent,
+  color: colorProp,
   filled = true,
 }: SparklineProps) {
+  // Read the palette before the early return so hook order stays stable.
+  const { colors } = useTheme();
+  const color = colorProp ?? colors.accent;
+
   if (data.length < 2) {
     return <View style={{ width, height }} />;
   }
@@ -180,6 +190,8 @@ export function Sparkline({
 // ---------------------------------------------------------------------------
 
 export function LoadingState({ label = 'Loading telemetry' }: { label?: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.centered}>
       <ActivityIndicator color={colors.accent} />
@@ -197,6 +209,8 @@ export function EmptyState({
   title: string;
   subtitle: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.centered}>
       <Ionicons name={icon} size={40} color={colors.textMuted} />
@@ -213,6 +227,8 @@ export function ErrorState({
   message: string;
   onRetry?: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.centered}>
       <Ionicons name="cloud-offline-outline" size={40} color={colors.failing} />
@@ -229,13 +245,20 @@ export function ErrorState({
 
 // ---------------------------------------------------------------------------
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
+    // Light mode has almost no border contrast, so cards lift with a shadow.
+    shadowColor: '#0B1220',
+    shadowOpacity: colors.shadowOpacity,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: colors.shadowOpacity > 0 ? 2 : 0,
   },
   pill: {
     paddingHorizontal: spacing.sm,
@@ -275,4 +298,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-});
+  });

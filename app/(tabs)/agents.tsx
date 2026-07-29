@@ -25,12 +25,22 @@ import {
   selectFilteredAgents,
   useFleetStore,
 } from '../../src/store/useFleetStore';
-import { colors, healthColor, radius, spacing, typography } from '../../src/theme';
+import {
+  type Colors,
+  healthColor,
+  radius,
+  spacing,
+  typography,
+} from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Agent } from '../../src/types';
 
 const FILTERS = ['all', 'healthy', 'degraded', 'failing', 'idle'] as const;
 
 export default function AgentsScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const loading = useFleetStore((s) => s.loading);
   const allAgents = useFleetStore((s) => s.agents);
   const statusFilter = useFleetStore((s) => s.statusFilter);
@@ -73,7 +83,8 @@ export default function AgentsScreen() {
       >
         {FILTERS.map((filter) => {
           const active = statusFilter === filter;
-          const tint = filter === 'all' ? colors.accent : healthColor(filter);
+          const tint =
+            filter === 'all' ? colors.accent : healthColor(filter, colors);
           return (
             <Pressable
               key={filter}
@@ -81,7 +92,10 @@ export default function AgentsScreen() {
               style={[
                 styles.filterChip,
                 active
-                  ? { backgroundColor: `${tint}26`, borderColor: tint }
+                  ? {
+                      backgroundColor: `${tint}${colors.tintAlpha}`,
+                      borderColor: tint,
+                    }
                   : null,
               ]}
             >
@@ -117,7 +131,9 @@ export default function AgentsScreen() {
 
 function AgentRow({ agent }: { agent: Agent }) {
   const router = useRouter();
-  const tint = healthColor(agent.status);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const tint = healthColor(agent.status, colors);
 
   return (
     <Card style={styles.agentCard} onPress={() => router.push(`/agent/${agent.id}`)}>
@@ -167,6 +183,7 @@ function Metric({
   value: string;
   tint?: string;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.metric}>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -177,7 +194,8 @@ function Metric({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
 
   searchWrap: {
@@ -195,11 +213,21 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, color: colors.text, ...typography.body },
 
-  filterScroll: { flexGrow: 0, marginBottom: spacing.md },
-  filterRow: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  // The row is sized explicitly and its items centred. Previously it relied on
+  // the chips' own padding, and with flexGrow:0 the ScrollView collapsed to a
+  // height that cut off the chip borders and letter descenders.
+  filterScroll: { flexGrow: 0, flexShrink: 0, marginBottom: spacing.md },
+  filterRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    minHeight: 44,
+  },
   filterChip: {
+    height: 34,
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: 7,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
@@ -209,6 +237,9 @@ const styles = StyleSheet.create({
     ...typography.small,
     color: colors.textDim,
     textTransform: 'capitalize',
+    // Explicit line height keeps descenders (g, y) inside the chip.
+    lineHeight: 16,
+    includeFontPadding: false,
   },
 
   list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
@@ -238,4 +269,4 @@ const styles = StyleSheet.create({
   agentFooterMeta: { alignItems: 'flex-end', gap: 2 },
   agentModel: { ...typography.tiny, color: colors.textDim },
   agentTime: { ...typography.tiny, color: colors.textMuted },
-});
+  });
