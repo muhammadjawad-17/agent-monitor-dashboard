@@ -24,7 +24,13 @@ export default function AgentDetailScreen() {
   const router = useRouter();
 
   const agent = useFleetStore((s) => s.agents.find((a) => a.id === id));
-  const runs = useFleetStore((s) => (id ? selectRunsForAgent(s, id) : []));
+  const allRuns = useFleetStore((s) => s.runs);
+
+  // Filtering allocates a new array, so memoise rather than subscribing to it.
+  const runs = React.useMemo(
+    () => (id ? selectRunsForAgent({ runs: allRuns }, id) : []),
+    [allRuns, id],
+  );
 
   if (!agent) {
     return (

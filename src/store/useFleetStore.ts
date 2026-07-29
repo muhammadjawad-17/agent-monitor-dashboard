@@ -104,10 +104,20 @@ export const useFleetStore = create<FleetState>((set, get) => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Selectors — plain functions so components subscribe to the narrowest slice.
+// Selectors — plain functions over the narrowest slice each one reads.
+//
+// These all build new arrays/objects, so they must NOT be passed straight to
+// useFleetStore: the hook compares results by reference, a fresh reference every
+// render reads as "changed", and React re-renders until it bails out with
+// "The result of getSnapshot should be cached" / "Maximum update depth".
+// Subscribe to the raw slices instead and wrap these in useMemo.
 // ---------------------------------------------------------------------------
 
-export function selectFilteredAgents(state: FleetState): Agent[] {
+export function selectFilteredAgents(state: {
+  agents: Agent[];
+  statusFilter: StatusFilter;
+  searchQuery: string;
+}): Agent[] {
   const query = state.searchQuery.trim().toLowerCase();
 
   return state.agents.filter((agent) => {
@@ -123,7 +133,7 @@ export function selectFilteredAgents(state: FleetState): Agent[] {
   });
 }
 
-export function selectFleetMetrics(state: FleetState): FleetMetrics {
+export function selectFleetMetrics(state: { agents: Agent[] }): FleetMetrics {
   const { agents } = state;
   if (agents.length === 0) {
     return {
@@ -159,11 +169,17 @@ export function selectFleetMetrics(state: FleetState): FleetMetrics {
   };
 }
 
-export function selectRunsForAgent(state: FleetState, agentId: string): Run[] {
+export function selectRunsForAgent(
+  state: { runs: Run[] },
+  agentId: string,
+): Run[] {
   return state.runs.filter((run) => run.agentId === agentId);
 }
 
-export function selectRecentFailures(state: FleetState, limit = 8): Run[] {
+export function selectRecentFailures(
+  state: { runs: Run[] },
+  limit = 8,
+): Run[] {
   return state.runs.filter((run) => run.status === 'failed').slice(0, limit);
 }
 

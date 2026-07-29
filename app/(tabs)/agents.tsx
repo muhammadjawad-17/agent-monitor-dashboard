@@ -32,11 +32,17 @@ const FILTERS = ['all', 'healthy', 'degraded', 'failing', 'idle'] as const;
 
 export default function AgentsScreen() {
   const loading = useFleetStore((s) => s.loading);
-  const agents = useFleetStore(selectFilteredAgents);
+  const allAgents = useFleetStore((s) => s.agents);
   const statusFilter = useFleetStore((s) => s.statusFilter);
   const setStatusFilter = useFleetStore((s) => s.setStatusFilter);
   const searchQuery = useFleetStore((s) => s.searchQuery);
   const setSearchQuery = useFleetStore((s) => s.setSearchQuery);
+
+  // Filtering allocates a new array, so memoise rather than subscribing to it.
+  const agents = React.useMemo(
+    () => selectFilteredAgents({ agents: allAgents, statusFilter, searchQuery }),
+    [allAgents, statusFilter, searchQuery],
+  );
 
   if (loading) return <LoadingState />;
 

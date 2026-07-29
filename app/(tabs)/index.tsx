@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -38,10 +38,15 @@ export default function OverviewScreen() {
   const loading = useFleetStore((s) => s.loading);
   const error = useFleetStore((s) => s.error);
   const agents = useFleetStore((s) => s.agents);
+  const runs = useFleetStore((s) => s.runs);
   const liveMode = useFleetStore((s) => s.liveMode);
   const toggleLiveMode = useFleetStore((s) => s.toggleLiveMode);
-  const metrics = useFleetStore(selectFleetMetrics);
-  const failures = useFleetStore((s) => selectRecentFailures(s, 4));
+
+  // Derived off the raw slices rather than passed to useFleetStore directly:
+  // these build new objects, so subscribing to them would fail Zustand's
+  // reference check on every render and loop.
+  const metrics = useMemo(() => selectFleetMetrics({ agents }), [agents]);
+  const failures = useMemo(() => selectRecentFailures({ runs }, 4), [runs]);
 
   const [refreshing, setRefreshing] = React.useState(false);
 

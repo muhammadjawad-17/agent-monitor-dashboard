@@ -1,117 +1,196 @@
-# Agent Monitor
+<div align="center">
 
-An observability dashboard for AI agent fleets, built with Expo Router, React
-Native and TypeScript.
+# ◆ Agent Monitor
 
-If you run agents in production you need the same things you need from any other
-production system: which ones are healthy, what broke, how much it cost, and a
-trace you can actually read when something goes wrong. That is what this is.
+### Observability for AI agent fleets — on your phone.
 
-![Expo](https://img.shields.io/badge/Expo-57-000020?logo=expo&logoColor=white)
-![React Native](https://img.shields.io/badge/React_Native-0.86-61DAFB?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+Which agents are healthy, what broke, how much it cost, and a trace you can
+actually read at 2am. Built with Expo Router, React Native and strict TypeScript.
 
----
+<br/>
 
-## What it does
+[![Expo](https://img.shields.io/badge/Expo-57-0A0E17?style=for-the-badge&logo=expo&logoColor=EEF2FF)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React_Native-0.86-4F8CFF?style=for-the-badge&logo=react&logoColor=white)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Zustand](https://img.shields.io/badge/Zustand-5-1A2233?style=for-the-badge)](https://zustand.docs.pmnd.rs)
+[![Platforms](https://img.shields.io/badge/iOS_·_Android_·_Web-22C55E?style=for-the-badge)](#-run-it)
 
-**Fleet overview.** Six live metrics across the whole fleet — agents online, runs
-today, error rate, average p95 latency, spend and token burn. Anything degraded
-or failing is pulled into a "needs attention" section at the top, so the screen
-answers "is anything on fire" before you scroll.
+<br/>
 
-**Live telemetry.** A toggle drives a simulated telemetry feed that ticks every
-three seconds, advancing run counts, shifting the throughput window, and jittering
-latency. It pauses automatically when the app backgrounds. In a real deployment
-this hook is where the WebSocket subscription goes — the rest of the app does not
-change.
+**No backend. No API keys. Clone, install, run.**
 
-**Per-agent drill-down.** Each agent has a full-width throughput chart, six health
-statistics, and its recent run history. Tap any run to get its trace.
-
-**Run traces.** A run trace shows a gutter of relative timestamps, colour-coded
-log levels, tagged tool calls with their individual durations, and the error that
-ended the run if it failed. This is the screen you actually open at 2am.
-
-**Alert rules.** Five rules with conditions, delivery channels and how often each
-has fired this week. Each can be armed or disarmed from the phone.
+</div>
 
 ---
 
-## The sparkline
+## ✦ Highlights
 
-The charts are a hand-rolled SVG component rather than a charting dependency —
-about 50 lines that builds an `M/L` path from the data, adds a gradient-filled
-area underneath, and pads two pixels so the stroke never clips at the bounds. It
-takes any numeric series, scales to its own min and max, and renders at whatever
-size the caller asks for. It is used at three different sizes across the app.
+|  | |
+|---|---|
+| 📊 **Fleet overview** | Six live metrics — agents online, runs today, error rate, p95 latency, spend, token burn. Anything degraded or failing is lifted into a **needs attention** section at the top, so the screen answers *"is anything on fire?"* before you scroll. |
+| 📡 **Live telemetry** | A toggle drives a feed that ticks every 3s — advancing run counts, shifting the throughput window, jittering latency. Auto-pauses when the app backgrounds. |
+| 🔍 **Per-agent drill-down** | Full-width throughput chart, six health statistics, recent run history. Tap any run to open its trace. |
+| 🧵 **Run traces** | Relative-timestamp gutter, colour-coded log levels, tagged tool calls with individual durations, and the error that ended the run. |
+| 🔔 **Alert rules** | Conditions, delivery channels, and fire counts for the week. Arm or disarm each rule from the phone. |
+| 🎯 **Deterministic data** | Seeded fixtures — organic-looking, byte-identical on every launch. Screenshots stay stable. |
 
 ---
 
-## Running it
+## ✦ Screens
+
+```
+Overview  →  Agents  →  Agent detail  →  Run trace
+                ↑                            ↑
+              Runs  ─────────────────────────┘
+             Alerts
+```
+
+Four tabs (`Overview · Agents · Runs · Alerts`) plus two pushed detail routes.
+
+---
+
+## ✦ Run it
 
 ```bash
 npm install
 npx expo start
 ```
 
-Then press `i` for the iOS simulator, `a` for Android, or scan the QR code with
-Expo Go.
+Then press <kbd>i</kbd> for the iOS simulator, <kbd>a</kbd> for Android, or scan
+the QR code with Expo Go.
+
+<details>
+<summary><b>Other commands</b></summary>
+
+<br/>
 
 ```bash
+npm run ios          # expo run:ios      — native iOS build
+npm run android      # expo run:android  — native Android build
+npm run web          # expo start --web
 npm run typecheck    # tsc --noEmit, strict mode
+
 npx expo export --platform ios   # verify a production bundle builds
 ```
 
-The app runs entirely against local fixtures — no backend, no keys, no setup.
+</details>
 
 ---
 
-## Architecture
+## ✦ Project structure
 
 ```
-app/                      expo-router file-based routes
-  _layout.tsx             root stack, theme, gesture handler
-  (tabs)/
-    _layout.tsx           bottom tab bar
-    index.tsx             fleet overview
-    agents.tsx            searchable, filterable agent list
-    runs.tsx              run history with status filters
-    alerts.tsx            alert rules
-  agent/[id].tsx          per-agent drill-down
-  run/[id].tsx            run trace viewer
+app/                          expo-router file-based routes
+├─ _layout.tsx                root stack · theme · gesture handler
+├─ (tabs)/
+│  ├─ _layout.tsx             bottom tab bar (Ionicons)
+│  ├─ index.tsx               fleet overview + needs-attention
+│  ├─ agents.tsx              searchable, filterable agent list
+│  ├─ runs.tsx                run history with status filters
+│  └─ alerts.tsx              alert rules
+├─ agent/[id].tsx             per-agent drill-down
+└─ run/[id].tsx               run trace viewer
 
 src/
-  components/ui.tsx       Card, Pill, StatusDot, Sparkline, states, formatters
-  store/useFleetStore.ts  Zustand store plus selectors
-  hooks/                  useLiveTelemetry — the simulated feed
-  services/mockData.ts    seeded deterministic fixtures
-  theme/                  colour, spacing, radius, typography tokens
-  types/                  Agent, Run, LogEntry, AlertRule, FleetMetrics
+├─ components/ui.tsx          Card · Pill · StatusDot · Sparkline
+│                             Loading/Empty/Error states · formatters
+├─ store/useFleetStore.ts     Zustand store + selectors
+├─ hooks/useLiveTelemetry.ts  the 3s telemetry feed
+├─ services/mockData.ts       seeded deterministic fixtures
+├─ theme/index.ts             colour · spacing · radius · typography tokens
+└─ types/index.ts             Agent · Run · LogEntry · AlertRule · FleetMetrics
+
+assets/                       app icon, splash, adaptive + monochrome icons
+app.json                      Expo config — dark UI, scheme `agentmonitor`
+tsconfig.json                 strict mode
+.gitignore                    build output, native dirs, env files
 ```
 
-**State.** Zustand, with selectors exported as plain functions so each component
-subscribes to the narrowest slice it needs and does not re-render on unrelated
-telemetry ticks.
+<sub>~2,600 lines of TypeScript across 14 source files.</sub>
 
-**Fixtures.** Generated from a seeded linear congruential generator, so the data
-looks organic — daytime throughput bumps, believable failure distributions — but
-is identical on every launch. Screenshots stay stable, and there is no flaky
-"sometimes the chart is empty" behaviour.
+<details>
+<summary><b>What's ignored</b></summary>
 
-**Types.** Strict mode, zero `any`, and the domain types live in one file that
-both the fixtures and the store are checked against.
+<br/>
+
+`android/` and `ios/` are generated by `expo prebuild` (or `npm run ios` /
+`npm run android`) and are not committed — the project stays a managed Expo app,
+and anyone cloning it regenerates them from `app.json`.
+
+```gitignore
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+.DS_Store
+.env
+.env.local
+
+# Generated by expo prebuild — regenerate, don't commit
+android/
+ios/
+```
+
+</details>
 
 ---
 
-## Wiring it to a real backend
+## ✦ How it's built
 
-Three things change, all inside `src/`:
+**State — `store/useFleetStore.ts`**
+Zustand, with selectors exported as plain functions
+(`selectFilteredAgents`, `selectFleetMetrics`, `selectRunsForAgent`,
+`selectRecentFailures`). Each component subscribes to the narrowest slice it
+needs, so an unrelated telemetry tick doesn't re-render the tree.
 
-1. `services/mockData.ts` becomes an API client.
-2. `store/useFleetStore.ts` — the `load` and `refresh` actions call it. The
-   selectors and every component are untouched.
-3. `hooks/useLiveTelemetry.ts` — replace the interval with a WebSocket
-   subscription that dispatches into the same `tick` reducer.
+**Charts — `components/ui.tsx`**
+The sparkline is hand-rolled SVG rather than a charting dependency — ~50 lines
+that build an `M/L` path from the series, add a gradient-filled area underneath,
+and pad two pixels so the stroke never clips at the bounds. It scales to its own
+min/max and renders at whatever size the caller asks for. Used at three sizes
+across the app.
 
-No screen changes.
+**Fixtures — `services/mockData.ts`**
+Generated from a seeded linear congruential generator. Daytime throughput bumps,
+believable failure distributions — but identical on every launch. No flaky
+"sometimes the chart is empty."
+
+**Design tokens — `theme/index.ts`**
+A frozen object so styles build at module scope with `StyleSheet.create` instead
+of being recomputed per render.
+
+<table>
+<tr>
+<td align="center">🟩<br/><sub><code>healthy</code></sub></td>
+<td align="center">🟨<br/><sub><code>degraded</code></sub></td>
+<td align="center">🟥<br/><sub><code>failing</code></sub></td>
+<td align="center">⬜<br/><sub><code>idle</code></sub></td>
+<td align="center">🟦<br/><sub><code>accent</code></sub></td>
+</tr>
+</table>
+
+**Types — `types/index.ts`**
+Strict mode, zero `any`. Domain types live in one file that both the fixtures and
+the store are checked against.
+
+---
+
+## ✦ Wiring it to a real backend
+
+Three files change. **No screen changes.**
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `src/services/mockData.ts` | Becomes an API client. |
+| 2 | `src/store/useFleetStore.ts` | `load` and `refresh` call it. Selectors and every component untouched. |
+| 3 | `src/hooks/useLiveTelemetry.ts` | Replace the interval with a WebSocket subscription dispatching into the same `tick` reducer. |
+
+That boundary is the point of the architecture — the UI never knows where the
+data came from.
+
+---
+
+<div align="center">
+<sub>MIT Licensed · Built as a portfolio project</sub>
+</div>
